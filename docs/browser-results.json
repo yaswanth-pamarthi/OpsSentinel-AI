@@ -1,0 +1,18 @@
+{
+  "browser": "Playwright Chromium",
+  "pages": 8,
+  "checks": [
+    "Navigated Operations dashboard",
+    "Navigated Log ingestion",
+    "Navigated Log explorer",
+    "Navigated Detection rules",
+    "Navigated Incidents",
+    "Seven-agent completed workflow visible",
+    "Navigated Agent analysis",
+    "Navigated Runbooks & remediation",
+    "Browser PDF report download passed",
+    "Navigated Incident reports"
+  ],
+  "javascript_errors": [],
+  "passed": true
+}

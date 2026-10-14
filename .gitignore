@@ -1,0 +1,12 @@
+.venv/
+node_modules/
+__pycache__/
+.env
+storage/
+frontend/dist/
+.pytest_cache/
+*.pyc
+LOGIN.txt
+*.tsbuildinfo
+.ruff_cache/
+docs/demo/page@*.webm

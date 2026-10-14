@@ -1,0 +1,939 @@
+OpsSentinel AI
+AI Incident Response and Cloud Operations Platform (AIOps)
+Complete implementation blueprint: concepts, justifications, architecture, setup, build, execution, testing and demonstration
+Target machine: Windows 11, Intel Core i5 12th Gen, NVIDIA RTX 3050Cost target: zero paid APIs and zero paid cloud servicesPrepared: 21 July 2026Document status: Implementation-ready MVP plan
+Important scope statement
+This guide is designed for a high-quality local MVP. It uses enterprise design concepts but intentionally avoids paid cloud dependencies, autonomous high-risk actions and infrastructure that cannot be justified on a single laptop.
+
+Document contents
+Use this as the reading sequence. The document is intentionally ordered from business understanding to implementation and finally execution.
+1.  Purpose, outcome and scope
+2.  Incident lifecycle and user journeys
+3.  Concept catalogue with justifications
+4.  Functional and non-functional requirements
+5.  System and agent architecture
+6.  Log ingestion, detection and event correlation
+7.  Root-cause analysis and knowledge retrieval
+8.  Data model, severity and evidence design
+9.  API and frontend design
+10.  Windows 11 free local setup
+11.  Implementation sequence and code structure
+12.  Agent contracts, prompts and safety
+13.  Testing, security and operational quality
+14.  Three-day hour-by-hour execution plan
+15.  Demonstration, troubleshooting and references
+
+Purpose, outcome and scope
+OpsSentinel AI demonstrates AI engineering for operational systems: log normalization, deterministic detection, evidence correlation, retrieval of historical knowledge, root-cause hypothesis generation, human-approved remediation and incident reporting. It is designed as a safe simulator and decision-support tool, not an autonomous production operations bot.
+Target final outcome: A user uploads or streams sample logs, a rule creates an incident, agents identify the important events, generate evidence-ranked root-cause hypotheses, retrieve a relevant runbook, propose safe remediation, wait for engineer approval and generate a post-incident report.
+MVP success criteria
+Runs completely locally without paid monitoring, cloud or LLM services.
+Accepts pasted text, file upload and JSON API log records.
+Normalizes at least three log formats into one schema.
+Detects prepared incidents using explainable rules.
+Builds an immutable incident timeline and evidence window.
+Outputs facts, likely cause, alternatives, missing evidence and confidence.
+Retrieves one or more relevant runbooks or historical incidents.
+Does not execute remediation commands automatically.
+Produces an engineer-approved incident report and portfolio-quality demo.
+Scope boundaries
+Included in MVP
+Excluded from seven-day MVP
+Local sample log ingestion and generator
+Production agents on Kubernetes, AWS, Azure or GCP
+Rules for errors, latency, authentication and database failure
+Streaming Kafka/Flink architecture
+AI-assisted correlation and RCA hypotheses
+Statistically trained anomaly-detection model
+Runbook retrieval and safe command display
+Autonomous shell or cloud control-plane execution
+Incident workflow, timeline and report
+Full ITSM, PagerDuty or ServiceNow integration
+Local dashboard and notification previews
+Real SMS, Slack or on-call escalation service
+
+Incident lifecycle and user journeys
+Personas
+Persona
+Permissions
+Primary goal
+Site Reliability Engineer / DevOps Engineer
+Ingest logs, investigate, approve remediation, resolve incidents
+Restore service safely with evidence.
+Incident Commander
+Change severity, coordinate timeline, approve closure
+Maintain accountability and communication.
+Viewer / Manager
+Read dashboards and final reports
+Understand impact, cause and prevention actions.
+
+Incident lifecycle
+1.  Logs arrive through upload, paste, JSON API or a synthetic generator.
+2.  Normalization maps timestamp, level, service, environment, trace ID, message and attributes.
+3.  Rule engine evaluates sliding-window counts, patterns and thresholds.
+4.  When a rule matches, an alert and incident are created with an evidence window.
+5.  Monitoring Agent summarizes the detection and suggests initial severity.
+6.  Log Analysis Agent groups errors and builds the earliest-to-latest event sequence.
+7.  Security Agent examines authentication and suspicious indicators when relevant.
+8.  Root Cause Agent generates ranked hypotheses using evidence and similar incidents.
+9.  Runbook Agent retrieves procedures and prepares diagnostic, containment and remediation steps.
+10.  Engineer approves, revises or rejects the proposed action; the platform records the actual resolution.
+11.  Incident Report Agent creates a post-incident report and indexes lessons learned.
+Concept catalogue with justifications
+Concept: AIOps
+Meaning
+Application of automation and AI to operational telemetry and incident workflows.
+How it is used
+The project uses rules, retrieval and language models to assist detection, investigation and reporting.
+Why this method is selected
+It demonstrates AI outside business-document assistants and connects engineering data to accountable workflows.
+Trade-off / alternative
+A real AIOps platform requires production integrations and large-scale telemetry; this project is an interview MVP.
+
+Concept: Log normalization
+Meaning
+Converting different raw formats into one canonical event schema.
+How it is used
+Regex/JSON parsers map logs to timestamp, level, service, trace ID, message and attributes.
+Why this method is selected
+Agents and rules should not understand every vendor-specific format. Normalization reduces downstream complexity.
+Trade-off / alternative
+Sending raw logs directly to the LLM is quicker but expensive, inconsistent and hard to query.
+
+Concept: Deterministic detection rules
+Meaning
+Explicit conditions create alerts from known failure patterns.
+How it is used
+Examples include more than 10 HTTP 500 errors in five minutes or repeated database connection failures.
+Why this method is selected
+Rules are explainable, fast and reliable for the prepared demo. They separate detection from LLM interpretation.
+Trade-off / alternative
+ML anomaly detection is valuable later but needs history, feature engineering and evaluation data.
+
+Concept: Sliding time window
+Meaning
+Events are counted or aggregated over a recent interval.
+How it is used
+Rules evaluate service errors, latency and failed logins over one- or five-minute windows.
+Why this method is selected
+Operational incidents are patterns over time, not isolated lines.
+Trade-off / alternative
+A single-event trigger is simpler but creates noisy alerts.
+
+Concept: Event correlation
+Meaning
+Related events are joined using time, service, trace ID and dependency clues.
+How it is used
+Database timeout events are associated with subsequent API 500 errors and latency changes.
+Why this method is selected
+Correlation turns a large log set into a coherent incident story.
+Trade-off / alternative
+LLM-only chronological summarization may miss explicit service or trace relationships.
+
+Concept: Evidence window
+Meaning
+A frozen subset of telemetry around detection time.
+How it is used
+The incident stores pre-trigger and post-trigger log references.
+Why this method is selected
+It preserves what the analysis was based on and prevents later log changes from silently altering the conclusion.
+Trade-off / alternative
+Always querying live logs can be useful in production but weakens reproducibility.
+
+Concept: Root-cause hypothesis
+Meaning
+A ranked explanation that remains distinct from confirmed fact.
+How it is used
+The RCA output labels facts, likely cause, alternatives, contradictions and missing data.
+Why this method is selected
+This avoids presenting plausible language as certainty.
+Trade-off / alternative
+A single definitive cause is easier to read but unsafe when evidence is incomplete.
+
+Concept: Evidence scoring
+Meaning
+Candidate causes are ranked by supporting events, contradictions and coverage.
+How it is used
+Deterministic code scores whether each hypothesis explains the first failure, affected services and observed recovery.
+Why this method is selected
+It creates a transparent reason for ordering hypotheses instead of trusting model confidence alone.
+Trade-off / alternative
+Pure LLM ranking is less reproducible.
+
+Concept: Runbook
+Meaning
+A documented procedure for diagnosis, containment and recovery.
+How it is used
+Runbooks are stored, chunked and retrieved for the affected service and symptom.
+Why this method is selected
+Operational knowledge should be reused rather than generated from scratch for every incident.
+Trade-off / alternative
+Generated steps without runbook retrieval may be generic or unsafe.
+
+Concept: Human approval gate
+Meaning
+An engineer authorizes the operational action.
+How it is used
+The system shows commands and risks but never runs them in the MVP.
+Why this method is selected
+Commands can destroy data or worsen outages. Approval is the correct safety boundary.
+Trade-off / alternative
+Autonomous remediation is a future capability only after sandboxing, permissions, rollback and extensive testing.
+
+Concept: Immutable timeline
+Meaning
+Incident events are appended rather than rewritten.
+How it is used
+Detection, analysis, decisions, remediation and validation are timestamped.
+Why this method is selected
+It provides accountability and creates high-quality post-incident reporting data.
+Trade-off / alternative
+Editable notes are convenient but can erase the sequence of decisions.
+
+Concept: Severity model
+Meaning
+A consistent classification of operational impact.
+How it is used
+SEV-1 to SEV-4 combines affected users, criticality, duration and workaround availability.
+Why this method is selected
+Severity determines response expectations and prioritizes the dashboard.
+Trade-off / alternative
+Letting the LLM invent severity with no policy produces inconsistent incidents.
+
+Concept: Knowledge-base RAG
+Meaning
+Historical incidents and runbooks are retrieved to ground recommendations.
+How it is used
+pgvector returns similar incidents filtered by service, symptom and environment.
+Why this method is selected
+It improves specificity and demonstrates organizational learning.
+Trade-off / alternative
+Fine-tuning is unnecessary because the knowledge changes and needs citations.
+
+Concept: Safe tool boundary
+Meaning
+Agents only access approved read or proposal tools.
+How it is used
+The MVP provides database reads, retrieval and deterministic calculators, but no shell execution.
+Why this method is selected
+Tool limitations are a fundamental agent-safety control.
+Trade-off / alternative
+A general shell tool looks impressive but introduces unacceptable risk on a personal laptop.
+
+Concept: Local inference
+Meaning
+Models run through Ollama on the laptop.
+How it is used
+Qwen3 4B performs analysis and nomic-embed-text performs retrieval embeddings.
+Why this method is selected
+It meets the free requirement and avoids external transfer of operational data.
+Trade-off / alternative
+Hosted models may improve quality but add cost and data-governance considerations.
+
+Functional and non-functional requirements
+Functional requirements
+ID
+Requirement
+Acceptance condition
+FR-01
+Manage monitored services
+Service, environment, owner and criticality are stored.
+FR-02
+Ingest logs in three ways
+Paste, file upload and JSON API all create canonical events.
+FR-03
+Normalize log formats
+At least JSON, common text and key=value samples are supported.
+FR-04
+Configure detection rules
+Enabled rules have threshold, window and severity.
+FR-05
+Create alert and incident
+Matching events are attached to a new incident.
+FR-06
+Analyze logs
+Grouped error signatures and earliest events are visible.
+FR-07
+Generate RCA hypotheses
+Facts, ranked causes, alternatives and missing evidence are returned.
+FR-08
+Retrieve runbooks and similar incidents
+Results contain relevance and citations.
+FR-09
+Propose remediation
+Containment, diagnosis, fix, rollback and validation are separated.
+FR-10
+Approve or revise action
+Engineer decision is recorded; no automatic execution.
+FR-11
+Maintain incident timeline
+All state changes and analysis events are appended.
+FR-12
+Generate incident report
+Final report includes impact, timeline, cause, resolution and actions.
+
+Non-functional requirements
+Category
+Requirement
+MVP target
+Performance
+Process a prepared log file locally
+10,000 simple lines ingested in under 30 seconds; RCA under 3 minutes.
+Safety
+No autonomous side effects
+All remediation remains proposal text until manually recorded as executed.
+Explainability
+Evidence for RCA
+Every fact and primary cause references event IDs or knowledge chunks.
+Reliability
+Repeatable incident creation
+Deduplication prevents the same rule/window from creating duplicates.
+Security
+Restricted ingestion and access
+JWT roles, upload limits, command sanitization and no secret logging.
+Observability
+Node and parser diagnostics
+Processing counts, rule matches, agent timings and errors are stored.
+Portability
+Local first
+Works on Windows 11 with documented commands and sample data.
+
+System and agent architecture
+
+OpsSentinel AI logical system architecture
+Architecture justification
+Hybrid deterministic and generative design: Rules decide when an incident exists; the LLM interprets evidence and drafts recommendations. This places reliability before novelty.
+Modular monolith: One FastAPI application is appropriate for a three-day build and a laptop. Parser, detection, incident and AI packages remain separate inside the codebase.
+Database-centric event history: PostgreSQL stores logs, alerts, incidents and timeline records. This is easier to inspect than hiding state in agent memory.
+Local knowledge base: Runbooks and resolved incident reports are embedded into pgvector, allowing the project to demonstrate organizational learning.
+No command executor: The remediation layer returns proposed commands and validation steps. This is a deliberate security architecture decision.
+
+Incident workflow from deterministic detection to human-approved resolution
+Agent responsibilities and contracts
+Agent
+Input
+Output
+Allowed tools
+Failure rule
+Monitoring
+Rule, matched events, service criticality
+Detection summary and initial severity suggestion
+Database read, severity calculator
+Cannot suppress a deterministic alert.
+Log Analysis
+Incident evidence event IDs
+Error groups, first occurrence, timeline candidates
+Event query and grouping tools
+Must report parse gaps and unknown timestamps.
+Security
+Authentication/security-relevant events
+Indicators, assessment and escalation flag
+Read-only event query
+Returns not-applicable when no security evidence exists.
+Root Cause
+Grouped events, topology hints, similar incidents
+Ranked hypotheses and missing evidence
+Knowledge retrieval, evidence scorer
+Must separate confirmed fact from hypothesis.
+Runbook
+Top hypotheses and affected service
+Diagnostic, containment, fix, rollback and validation plan
+Runbook retrieval only
+No command is labelled safe without a risk note.
+Incident Report
+Timeline, approved resolution and actions
+Post-incident report model
+Template renderer
+Cannot rewrite the immutable timeline.
+Notification
+Incident state and audience
+Preview messages
+Template renderer only
+No external send in MVP.
+
+Log ingestion, detection and event correlation
+Canonical log event schema
+{  "event_id": "uuid",  "timestamp": "2026-07-21T10:03:14.231Z",  "received_at": "2026-07-21T10:03:15.002Z",  "service": "checkout-api",  "environment": "demo",  "level": "ERROR",  "message": "database connection timeout",  "trace_id": "trc-82af",  "host": "checkout-01",  "source_type": "application",  "attributes": {    "http_status": 500,    "latency_ms": 5200,    "database": "orders"  },  "raw_line": "...",  "parse_status": "parsed"}
+Parser strategy
+1.  Attempt JSON parsing first and map known keys.
+2.  Attempt key=value parsing for structured text.
+3.  Attempt a configured regex format for timestamp, level, service and message.
+4.  If parsing is incomplete, preserve raw_line and set parse_status=partial rather than discarding the event.
+5.  Normalize time zones to UTC while preserving the original timestamp string.
+6.  Generate a stable event hash to prevent duplicate ingestion.
+Example detection rules
+Rule
+Condition
+Default severity
+Why it exists
+HTTP_5XX_BURST
+count(http_status >= 500) >= 10 in 5 minutes per service
+SEV-2
+Captures sustained service failure rather than one error.
+DB_CONNECTION_FAILURE
+count(message contains connection timeout/refused) >= 5 in 3 minutes
+SEV-2
+Common upstream cause of API errors.
+HIGH_LATENCY
+p95 latency_ms > 2000 for 5 minutes
+SEV-3
+Detects degraded service before total failure.
+AUTH_FAILURE_BURST
+failed login count >= 20 from one IP in 5 minutes
+SEV-2
+Demonstrates security-oriented analysis.
+RESTART_LOOP
+same host restart event >= 3 in 10 minutes
+SEV-2
+Indicates unstable deployment or configuration.
+ERROR_RATE_CRITICAL
+error ratio > 50% and requests > 20 in 2 minutes
+SEV-1
+Prepared critical outage scenario.
+
+Why rules create incidents before agents run
+An LLM should not continuously read every log line on a laptop or decide incident existence from vague prompts. Rules are cheap, explainable and testable. Agents run only after a meaningful condition is detected, which limits latency, model load and false narratives.
+Event correlation keys
+Key
+Strength
+Example use
+trace_id
+High
+Join API error to database/client events in one request.
+service + timestamp window
+Medium
+Associate repeated failures within the same component.
+host/container
+Medium
+Identify one unhealthy instance.
+error signature
+Medium
+Group messages after removing IDs and variable numbers.
+declared dependency
+Contextual
+Explain checkout-api failures following orders-db errors.
+
+Root-cause analysis and knowledge retrieval
+
+Evidence-ranked root-cause analysis model
+RCA output model
+{  "confirmed_facts": [    {"statement": "Database timeouts began at 10:03:14Z", "event_ids": ["..."]}  ],  "hypotheses": [    {      "rank": 1,      "cause": "Orders database connection pool exhaustion",      "supporting_event_ids": ["...", "..."],      "contradicting_event_ids": [],      "explains": ["first failure", "HTTP 500 burst", "latency increase"],      "confidence": "high"    }  ],  "missing_evidence": ["database active connection metric"],  "recommended_checks": ["inspect pool utilization and database sessions"]}
+Evidence scoring example
+score = 0score += 30 if hypothesis_explains_first_failure else 0score += 25 if hypothesis_explains_majority_of_error_groups else 0score += 20 if a_similar_resolved_incident_supports_it else 0score += 15 if dependency_order_is_consistent else 0score += 10 if remediation_result_later_confirms_it else 0score -= 25 for each strong contradictory event# Score is used to order hypotheses; it is not presented as a calibrated probability.
+Knowledge-base ingestion
+1.  Accept Markdown, text or PDF runbooks and finalized incident reports.
+2.  Extract service, symptom, environment, commands, risks and validation sections.
+3.  Chunk by headings such as Symptoms, Diagnosis, Mitigation and Rollback.
+4.  Embed locally and store source document, section and version metadata.
+5.  Filter retrieval by service and environment before vector ranking.
+6.  Return citations and an explicit warning when the runbook version is old or the service does not match.
+Data model, severity and evidence design
+Core entities
+Table
+Important fields
+Purpose
+users
+id, email, password_hash, role
+Authentication and incident authority.
+services
+id, name, environment, criticality, owner, dependencies_json
+Monitored application context.
+log_sources
+id, service_id, name, type, parser_config
+Ingestion source and parser selection.
+log_events
+timestamp, service_id, level, message, trace_id, attributes, hash
+Canonical telemetry.
+detection_rules
+name, query_type, pattern, threshold, window_seconds, severity
+Explainable incident conditions.
+alerts
+rule_id, service_id, window_start, window_end, event_count, dedupe_key
+Matched rule instance.
+incidents
+title, severity, status, service_id, detected_at, commander_id
+Incident lifecycle record.
+incident_events
+incident_id, event_id, relationship, frozen_at
+Evidence window.
+timeline_entries
+incident_id, type, timestamp, actor, payload_json
+Immutable incident chronology.
+agent_runs
+incident_id, workflow, status, model, timestamps
+Workflow observability.
+agent_outputs
+run_id, agent_name, schema_version, payload_json
+Validated analysis results.
+rca_hypotheses
+incident_id, rank, cause, evidence_json, score, confidence
+Explainable RCA.
+runbooks
+service_id, title, version, path, status
+Operational knowledge registry.
+knowledge_chunks
+source_type, source_id, section, text, embedding
+RAG evidence.
+remediation_proposals
+incident_id, containment, diagnostics, fix, rollback, validation
+Proposed action plan.
+approvals
+proposal_id, engineer_id, decision, reason, timestamp
+Human safety gate.
+incident_reports
+incident_id, path, generated_at, version
+Final report artifact.
+
+Severity policy
+Severity
+Definition
+MVP example
+SEV-1
+Critical service unavailable or severe business/security impact with no workaround
+More than 50% checkout requests failing.
+SEV-2
+Major degradation or significant subset of users affected
+Database connection failures causing repeated API errors.
+SEV-3
+Limited degradation with workaround or low user impact
+High latency on one noncritical service.
+SEV-4
+Minor issue, warning or informational investigation
+Intermittent warning with no confirmed impact.
+
+Incident status transitions
+DETECTED -> INVESTIGATING -> ROOT_CAUSE_IDENTIFIED         -> REMEDIATION_PROPOSED -> RESOLVED -> CLOSEDAllowed exceptional transitions:INVESTIGATING -> FALSE_POSITIVEREMEDIATION_PROPOSED -> INVESTIGATING  # proposal rejected or new evidenceRESOLVED -> INVESTIGATING              # validation failed / recurrence
+API and frontend design
+Primary REST endpoints
+Method and path
+Purpose
+Role
+POST /auth/login
+Return access token
+Public
+GET/POST /services
+Manage service catalog
+Engineer, Commander
+POST /logs/upload
+Upload a log file
+Engineer
+POST /logs/paste
+Paste raw log text
+Engineer
+POST /logs/events
+Ingest canonical JSON events
+Engineer / API client
+GET /logs/search
+Filter by service, time, level and text
+Engineer, Commander
+GET/POST /rules
+List or configure detection rules
+Commander
+POST /rules/evaluate
+Evaluate prepared time range
+Engineer
+GET /alerts
+View matches and deduplication
+Engineer, Commander
+GET /incidents
+List incidents
+All roles
+GET /incidents/{id}
+Read incident, evidence and timeline
+All roles
+POST /incidents/{id}/analysis-runs
+Start RCA workflow
+Engineer
+GET /analysis-runs/{id}
+Read node status and outputs
+Engineer, Commander
+POST /proposals/{id}/decision
+Approve, reject or request revision
+Engineer, Commander
+POST /incidents/{id}/resolve
+Record actual resolution and validation
+Engineer
+POST /incidents/{id}/report
+Generate final report
+Commander
+
+Frontend pages and components
+Page
+Key components
+Interview value
+Operations dashboard
+Service health, open incidents, severity chart, recent alerts
+Communicates operational state quickly.
+Log ingestion
+Upload, paste, source selector, parse summary
+Shows data engineering before AI.
+Log explorer
+Filters, grouped signatures, trace view
+Demonstrates observability concepts.
+Rules
+Rule cards, thresholds, test evaluation
+Shows explainable detection.
+Incident list/detail
+Status, severity, service, impact and evidence
+Represents incident management.
+Agent analysis
+Node timeline, facts, hypotheses, missing data
+Makes AI reasoning structure inspectable.
+Runbook and remediation
+Retrieved sections, command blocks, risk and rollback
+Demonstrates grounded operations assistance.
+Approval panel
+Approve/reject/revise with reason
+Shows safety and accountability.
+Incident report
+Timeline, root cause, resolution and actions
+Completes the learning cycle.
+
+Windows 11 local development setup
+This section establishes one free local environment that can be reused for both portfolio projects. Use native Ollama for GPU inference and Docker only for PostgreSQL/pgvector. This reduces Docker GPU complexity and keeps the RTX 3050 available to Ollama.
+
+Recommended deployment layout on the personal laptop
+Hardware suitability and limits
+Component
+Assessment
+Practical guidance
+Intel Core i5 12th Gen
+Suitable
+FastAPI, PostgreSQL, document parsing and React development are appropriate. Avoid large parallel batch jobs.
+NVIDIA RTX 3050 laptop GPU
+Suitable for small quantized models
+Use Qwen3 4B as the default. Use Qwen3 1.7B if the GPU has 4 GB VRAM and responses are slow or out-of-memory.
+System RAM
+16 GB recommended; 8 GB is restrictive
+Allocate no more than 4-6 GB to Docker/WSL. Close browser-heavy applications during inference.
+Disk
+At least 25 GB free
+Models, Docker images, node_modules and sample documents can consume several gigabytes.
+Thermals
+Laptop cooling matters
+Plug in the charger, use performance mode and keep ventilation clear during demos.
+
+Completely free software stack
+Tool
+Purpose
+Free-use basis
+Selected version approach
+Git for Windows
+Source control
+Free/open-source Git distribution
+Current stable installer
+Visual Studio Code
+Editor and debugger
+Free desktop editor
+Current stable; VSCodium is an open-source alternative
+Python 3.12 x64
+Backend and AI workflow
+Python Software Foundation license
+Pinned for broad package compatibility
+Node.js 24 LTS
+Frontend toolchain
+OpenJS open-source runtime
+LTS rather than Current
+React + TypeScript + Vite
+Web frontend
+Open-source packages
+Use project lock file to pin exact versions
+FastAPI + SQLAlchemy + Alembic
+API, ORM and migrations
+Open-source Python packages
+Pinned in requirements.txt
+LangGraph
+Stateful agent workflow
+Open-source orchestration framework
+Use Graph API and local checkpoint state
+PostgreSQL + pgvector
+Relational and vector storage
+Open-source database and extension
+Docker image based on PostgreSQL 17
+Ollama
+Local model runtime
+Free local runtime; model licenses vary
+Native Windows installation
+Qwen3 4B
+Local generation model
+Open model; verify model card for redistribution
+Quantized Ollama package
+nomic-embed-text
+Local embeddings
+Apache 2.0 model
+274 MB embedding model
+Docker Desktop
+Local database container
+Free for personal use, education and qualifying small organizations
+WSL2 backend; licensing must be rechecked for employer use
+pytest + Vitest
+Automated tests
+Open-source
+Unit and API tests
+ReportLab / python-docx
+Generated reports
+Open-source libraries
+Local report generation
+
+Zero-cost boundary: No OpenAI, Anthropic, hosted vector database, cloud storage, paid monitoring or paid deployment is required. Internet access is needed only to download tools and models. After setup, core demonstrations can run locally.
+Install prerequisites
+Open PowerShell as Administrator for WSL and Docker preparation. The winget package names below are convenient; use the official installer if a package is unavailable in your regional winget catalog.
+# Update Windows Package Manager metadatawinget source update# Development toolswinget install --id Git.Git -ewinget install --id Microsoft.VisualStudioCode -ewinget install --id Python.Python.3.12 -ewinget install --id OpenJS.NodeJS.LTS -ewinget install --id Docker.DockerDesktop -ewinget install --id Ollama.Ollama -e# Enable and update WSL2 for Docker Desktopwsl --installwsl --update# Restart Windows after WSL/Docker installation when requested.
+Verify the machine
+git --versionpython --versionnode --versionnpm --versiondocker --versiondocker compose versionwsl --statusnvidia-smiollama --version
+Install local AI models
+# Default generation model for the RTX 3050 laptopollama pull qwen3:4b# Fallback when VRAM or response latency is a problemollama pull qwen3:1.7b# Embedding model for pgvector retrievalollama pull nomic-embed-text# Basic testollama run qwen3:4b "Return only this JSON: {\"status\": \"ok\"}"
+RTX 3050 tuning: Start with a 4,096-token context, one concurrent model request and short agent outputs. A model file fitting on disk does not guarantee that the entire runtime fits in VRAM. Ollama may partially use system RAM, which is acceptable for a local demo but increases latency.
+Create project workspace
+mkdir C:\ai-portfoliocd C:\ai-portfoliomkdir opssentinel-aicd opssentinel-aigit initmkdir backend, frontend, docs, sample-data, scripts, tests, storage
+Create the PostgreSQL and pgvector service
+Save the following as docker-compose.yml in the project root. Only the database runs in Docker during development. The frontend, backend and Ollama run natively for a faster edit-run cycle.
+services:  db:    image: pgvector/pgvector:pg17    container_name: opssentinel-db    environment:      POSTGRES_DB: opssentinel      POSTGRES_USER: app_user      POSTGRES_PASSWORD: change_me_local    ports:      - "5432:5432"    volumes:      - pgdata:/var/lib/postgresql/data    healthcheck:      test: ["CMD-SHELL", "pg_isready -U app_user -d opssentinel"]      interval: 5s      timeout: 5s      retries: 10volumes:  pgdata:
+docker compose up -d dbdocker compose psdocker compose logs db --tail 50
+Create the FastAPI backend
+cd backendpython -m venv .venv.\.venv\Scripts\Activate.ps1python -m pip install --upgrade pippip install fastapi "uvicorn[standard]" sqlalchemy psycopg[binary] alembic \  pydantic-settings python-multipart python-jose[cryptography] pwdlib[argon2] \  langgraph langchain-core ollama httpx pypdf reportlab \  pytest pytest-asyncio ruffpip freeze > requirements.txtalembic init migrations
+Recommended backend environment file (.env):
+APP_ENV=developmentDATABASE_URL=postgresql+psycopg://app_user:change_me_local@localhost:5432/opssentinelJWT_SECRET=replace_with_a_long_random_local_secretJWT_ALGORITHM=HS256ACCESS_TOKEN_MINUTES=60OLLAMA_BASE_URL=http://localhost:11434OLLAMA_CHAT_MODEL=qwen3:4bOLLAMA_EMBED_MODEL=nomic-embed-textUPLOAD_DIR=../storage/uploadsREPORT_DIR=../storage/reportsLOG_LEVEL=INFO
+Create the React frontend
+cd ..\frontendnpm create vite@latest . -- --template react-tsnpm installnpm install react-router-dom @tanstack/react-query axios zod react-hook-form \  @hookform/resolvers recharts lucide-react clsx date-fnsnpm install -D vitest @testing-library/react @testing-library/jest-dom jsdom# Start the frontendnpm run dev
+Use simple CSS modules or Tailwind. For a seven-day project, do not spend half a day resolving a styling framework migration; the architecture and workflow matter more than the CSS tool.
+Recommended development start sequence
+# Terminal 1 - databasecd C:\ai-portfolio\opssentinel-aidocker compose up -d db# Terminal 2 - local model server (normally Ollama is already running)ollama serve# Terminal 3 - backendcd C:\ai-portfolio\opssentinel-ai\backend.\.venv\Scripts\Activate.ps1uvicorn app.main:app --reload --port 8000# Terminal 4 - frontendcd C:\ai-portfolio\opssentinel-ai\frontendnpm run dev# Open# UI:       http://localhost:5173# API docs: http://localhost:8000/docs
+Laptop performance configuration
+Ollama concurrency: Run one agent LLM call at a time initially. Parallel graph nodes can be retained logically but executed sequentially on the laptop.
+Context size: Use 4K context by default. Retrieve only the top 4-6 chunks and summarize long documents before the final synthesis.
+Embedding batch: Embed 16-32 chunks per batch. Persist embeddings so documents are not reprocessed on every run.
+Database: Use HNSW only after data exceeds a few thousand chunks. Exact search is adequate for small sample data.
+Frontend: Disable unnecessary animated charts during model execution. Poll agent-run status every two seconds rather than using WebSockets in the MVP.
+Thermal stability: Use AC power and the Windows best-performance power profile for demo recordings.
+Implementation sequence and code structure
+Repository structure
+opssentinel-ai/|-- backend/|   |-- app/|   |   |-- api/routes/|   |   |-- ingestion/parsers/|   |   |-- detection/|   |   |-- incidents/|   |   |-- agents/|   |   |-- workflows/|   |   |-- knowledge/|   |   |-- models/|   |   |-- schemas/|   |   |-- core/|   |   `-- main.py|   |-- migrations/|   |-- tests/|   `-- requirements.txt|-- frontend/|-- sample-data/|   |-- logs/|   |-- runbooks/|   `-- incident-scenarios/|-- scripts/generate_logs.py|-- storage/uploads/|-- storage/reports/|-- docker-compose.yml|-- .env.example`-- README.md
+Backend implementation order
+1.  Create settings, database, health endpoint, authentication and roles.
+2.  Create service catalog and log source models.
+3.  Implement canonical event schema, parsers, deduplication and bulk insert.
+4.  Implement log explorer queries and grouped error signatures.
+5.  Implement rule definitions, sliding-window evaluation and alert deduplication.
+6.  Create incidents, evidence windows and append-only timeline service.
+7.  Create knowledge document ingestion, embeddings and retrieval.
+8.  Create LangGraph state, agents, evidence scoring and run logging.
+9.  Create remediation approval and resolution validation workflow.
+10.  Create incident report and synthetic scenario scripts.
+11.  Add tests before dashboard polish.
+Create pgvector extension
+docker exec -it opssentinel-db psql -U app_user -d opssentinel \  -c "CREATE EXTENSION IF NOT EXISTS vector;"
+LangGraph state sketch
+from typing import TypedDictclass IncidentState(TypedDict, total=False):    incident_id: str    run_id: str    service: dict    matched_rule: dict    evidence_event_ids: list[str]    detection_summary: dict    log_analysis: dict    security_assessment: dict    similar_incidents: list[dict]    rca_hypotheses: list[dict]    remediation_proposal: dict    approval_status: str    actual_resolution: dict    report: dict    errors: list[dict]
+Synthetic log scenario
+Create a deterministic generator so the demo can be repeated. The scenario should emit normal traffic, increasing database timeouts, rising latency, API 500 errors, an alert, a simulated pool configuration correction and recovery events.
+# scripts/generate_logs.py should support:python scripts/generate_logs.py --scenario db-pool-exhaustion --minutes 15 \  --output sample-data/logs/db-pool-exhaustion.jsonl# Optional scenarios# auth-brute-force# payment-api-latency# deployment-restart-loop
+Agent contracts, prompts and safety
+Root Cause Agent prompt pattern
+SYSTEM ROLEYou are the Root Cause Agent in an incident decision-support platform.You generate hypotheses; you do not claim certainty without evidence.REQUIRED DISTINCTIONS1. Confirmed facts: directly supported by event IDs.2. Likely causes: hypotheses with supporting and contradicting evidence.3. Alternative causes: plausible but lower-ranked explanations.4. Missing evidence: data required to improve confidence.BOUNDARIES- Use only supplied incident events and cited knowledge chunks.- Never invent metrics, commands or topology.- Do not provide destructive commands.- Return only the requested JSON schema.INCIDENT EVIDENCE{{events_and_groups}}SIMILAR INCIDENTS{{retrieved_knowledge}}
+Remediation proposal structure
+{  "immediate_containment": [    {"step": "Reduce incoming traffic using the demo traffic toggle", "risk": "low"}  ],  "diagnostics": [    {"command": "SELECT count(*) FROM pg_stat_activity;", "purpose": "Inspect sessions", "risk": "read-only"}  ],  "permanent_fix": [    {"step": "Correct connection-pool sizing and redeploy configuration", "risk": "medium"}  ],  "rollback": ["Restore the previous pool configuration"],  "validation": ["HTTP 5xx rate remains below 1% for 10 minutes"],  "requires_approval": true,  "limitations": ["No live database metric was connected in this MVP"]}
+Safety controls
+No subprocess, PowerShell, SSH, Kubernetes or cloud SDK execution tool is registered with the agents.
+Command text is displayed as untrusted proposed content and escaped in the frontend.
+Destructive keywords such as DROP, DELETE without WHERE, rm -rf and shutdown trigger a high-risk badge.
+Every remediation requires an authenticated engineer decision.
+The actual action is recorded manually and separately from the AI proposal.
+Validation evidence is required before RESOLVED can move to CLOSED.
+Agent outputs cannot edit or delete timeline entries.
+Testing, security and operational quality
+Critical test cases
+The same event file ingested twice does not duplicate events.
+Malformed lines are retained with partial parse status and do not fail the entire batch.
+A single HTTP 500 does not create a burst alert.
+The prepared threshold creates exactly one deduplicated alert and incident.
+Incident evidence references events inside the configured time window.
+RCA facts reference valid event IDs.
+Primary hypothesis has more evidence support than lower-ranked alternatives.
+No proposal is marked executed by the AI.
+Rejected remediation returns the workflow to investigation or revision.
+Closed incident report matches the immutable timeline and actual resolution.
+Evaluation metrics
+Metric
+How to calculate
+MVP target
+Parser success
+Parsed or partially parsed lines / input lines
+At least 99% retained.
+Detection precision on scenarios
+Correct alerts / generated alerts
+100% on prepared scenarios.
+Duplicate-alert rate
+Duplicate alerts / rule windows
+0%.
+RCA evidence validity
+Referenced existing events/chunks / all references
+100%.
+Unsupported fact rate
+Facts without event support / facts
+0%.
+Runbook relevance
+Relevant retrieved items in top 3 / scenarios
+At least 1 relevant result for each prepared scenario.
+Workflow safety
+Proposals executed automatically
+0.
+Local RCA latency
+Analysis start to proposal
+Under 3 minutes for prepared incident.
+
+Security checklist
+Hash passwords and enforce role authorization.
+Limit upload size and accepted text/log extensions.
+Do not store real credentials, tokens or customer data in sample logs.
+Redact common secret patterns before displaying or sending logs to the model.
+Escape raw log and command text in the UI.
+Use read-only database retrieval tools for agents.
+Keep .env, uploads, generated reports and Docker volumes out of Git.
+Document that the system is not approved for production autonomous remediation.
+Three-day hour-by-hour execution plan
+Day / time
+Work package
+Deliverable
+Day 5, 08:00-09:00
+Create repository, verify shared toolchain and database
+Clean project and healthy pgvector database.
+Day 5, 09:00-11:00
+Auth, service catalog and core migrations
+Protected API and seeded services.
+Day 5, 11:00-14:00
+Canonical schema, JSON/text parsers and bulk ingestion
+Three supported ingestion paths.
+Day 5, 15:00-17:00
+Log search, grouping and synthetic generator
+Repeatable failure scenario.
+Day 5, 17:00-19:00
+Detection rules, windows, alerts and deduplication
+Incident created from prepared logs.
+Day 5, 19:00-20:00
+React dashboard and ingestion pages
+Visible logs, rules and incidents.
+Day 6, 08:00-10:00
+Incident evidence window and append-only timeline
+Reliable incident context.
+Day 6, 10:00-12:00
+Runbook ingestion, embeddings and retrieval
+Grounded knowledge results.
+Day 6, 13:00-15:00
+LangGraph state, monitoring and log analysis nodes
+Agent run timeline.
+Day 6, 15:00-17:00
+Security and root-cause nodes
+Facts and ranked hypotheses.
+Day 6, 17:00-19:00
+Runbook/remediation node and evidence scoring
+Safe proposed action plan.
+Day 6, 19:00-20:00
+RCA and runbook frontend panels
+Inspectable analysis.
+Day 7, 08:00-10:00
+Approval/revision and resolution workflow
+Human safety gate completed.
+Day 7, 10:00-12:00
+Incident report and notification previews
+Finalized incident artifact.
+Day 7, 13:00-15:00
+Golden scenarios, parser and API tests
+Stable end-to-end demo.
+Day 7, 15:00-17:00
+UI polish, charts, empty/error states
+Professional operations console.
+Day 7, 17:00-19:00
+README, diagrams, screenshots, demo recording
+Interview-ready repository.
+Day 7, 19:00-20:00
+Practice explanation and tag v0.1.0
+Confident walkthrough.
+
+Schedule control: If behind schedule, remove notification previews and the Security Agent first. Keep deterministic rules, evidence window, RCA distinctions, runbook retrieval, human approval and final report; these define the project.
+Demonstration and acceptance
+Prepared demo scenario
+Scenario: checkout-api begins experiencing database connection pool exhaustion. Database timeout events appear first, latency rises, then HTTP 500 errors cross the configured threshold. The platform creates a SEV-2 incident, identifies the first failure, retrieves a pool-exhaustion runbook, proposes read-only diagnostics and a configuration correction, waits for engineer approval, records recovery and generates the post-incident report.
+Three-minute demo script
+1.  Open the dashboard and explain the local architecture.
+2.  Upload the generated JSONL logs and show the parse summary.
+3.  Run rule evaluation and open the created incident.
+4.  Show the evidence window and immutable timeline.
+5.  Run the agent workflow and inspect confirmed facts versus hypotheses.
+6.  Open the retrieved runbook and proposed remediation with risks and rollback.
+7.  Approve the proposal, record the simulated fix and validation.
+8.  Generate the incident report and explain why commands were not auto-executed.
+Definition of done
+Fresh clone setup is documented and uses only free local dependencies.
+Synthetic scenario generation is deterministic.
+At least three log formats are accepted.
+Prepared rules create expected incidents without duplicates.
+Every confirmed fact has event evidence.
+Root cause remains a hypothesis until resolution evidence confirms it.
+Runbook retrieval contains source citations.
+No AI node can execute a system command.
+Engineer approval and validation are required to close an incident.
+Critical tests pass and README contains screenshots, architecture and limitations.
+Troubleshooting guide
+Problem
+Likely cause
+Resolution
+Ingestion is slow
+One database insert per line
+Parse in batches and use bulk insert of 500-1,000 events.
+Rule creates repeated incidents
+Missing dedupe key
+Use rule_id + service_id + time bucket and a unique database constraint.
+Timestamps are ordered incorrectly
+Mixed formats/time zones
+Normalize to UTC and retain original timestamp for debugging.
+RCA cites nonexistent events
+Output validation missing
+Validate every event ID against incident_events before persistence.
+Model hallucinates metrics
+Prompt includes unclear context
+Require event IDs, omit unavailable metrics and list them as missing evidence.
+Ollama is slow/out of memory
+Model/context too large
+Use qwen3:1.7b, top 50-100 important events, grouped signatures and 4K context.
+Relevant runbook not retrieved
+Chunking or metadata mismatch
+Chunk by runbook section, filter by service and test with known queries.
+Docker port conflict
+Existing PostgreSQL
+Change host mapping to 5433 and update DATABASE_URL.
+UI freezes on large logs
+Rendering all rows
+Use server pagination and virtualized or limited tables.
+
+Interview explanation guide
+The project becomes valuable only when you can defend its design. Use these answers as a framework, not as memorized marketing language.
+Why use rules if this is an AI project?
+Detection is a reliability problem. Rules provide explainable, testable incident triggers. AI is used where unstructured interpretation adds value: grouping errors, generating hypotheses, retrieving operational knowledge and drafting reports. This hybrid design is more credible than using an LLM for every step.
+Why is the root cause called a hypothesis?
+Logs rarely prove causality by themselves. The platform separates confirmed events from likely explanations and alternative causes. Resolution validation can later strengthen or weaken a hypothesis. This wording avoids false certainty.
+Why not execute remediation automatically?
+The MVP lacks production permissions, sandboxing, change controls, rollback automation and blast-radius testing. Displaying an approval-ready plan demonstrates responsible agent design. Autonomous execution would add risk without proving better AI engineering.
+Why LangGraph?
+An incident workflow must preserve state across detection, specialist analysis, retries, a human pause, resolution and reporting. LangGraph models these nodes and transitions explicitly and supports stateful, human-in-the-loop workflows [R1].
+What would you add for production?
+Real telemetry connectors, streaming ingestion, service topology, statistical anomaly detection, OpenTelemetry traces, RBAC/SSO, secrets management, ITSM and on-call integrations, evaluation datasets, command sandboxing, policy-as-code and high-availability deployment.
+One-minute project summary
+OpsSentinel AI is a local incident-response platform that ingests application logs, detects incidents with deterministic rules, correlates evidence with specialized agents, retrieves matching runbooks and produces an approval-ready remediation plan and incident report. LangGraph manages the stateful workflow, PostgreSQL stores the immutable timeline, pgvector retrieves similar incidents, and Ollama provides local language-model inference. The system deliberately does not execute remediation commands automatically; an engineer remains the decision authority.
+Official references and verification notes
+The implementation choices were checked against official project documentation available on 21 July 2026. Software versions and licenses can change; verify again before commercial or employer deployment.
+1.  R1. LangGraph overview and capabilities
+2.  R2. LangGraph graph concepts: state, nodes and edges
+3.  R3. Ollama on Windows
+4.  R4. Ollama GPU hardware support
+5.  R5. Qwen3 models in the Ollama library
+6.  R6. nomic-embed-text model and Apache 2.0 license information
+7.  R7. pgvector installation and capabilities
+8.  R8. Docker Desktop licensing
+9.  R9. Docker Desktop Windows installation and WSL2 requirements
+10.  R10. Vite getting started and Node compatibility
+11.  R11. Node.js release and LTS information
+12.  R12. Python Windows downloads
+13.  R13. PostgreSQL Windows downloads
+14.  R14. FastAPI documentation
+15.  R15. React documentation

@@ -1,0 +1,20 @@
+[
+  {
+    "decision": "reject",
+    "incident_id": "b4e73f81-590e-4711-b1b5-1d55f43b2341",
+    "run_id": "2be1c76b-857e-4b99-adf3-67556b2a0cf9",
+    "proposal_status": "REJECTED",
+    "incident_status": "INVESTIGATING",
+    "agents": 7,
+    "executed": false
+  },
+  {
+    "decision": "revise",
+    "incident_id": "b4e73f81-590e-4711-b1b5-1d55f43b2341",
+    "run_id": "30daeac5-fa35-4d0a-b5db-587458aa5b52",
+    "proposal_status": "REVISION_REQUIRED",
+    "incident_status": "INVESTIGATING",
+    "agents": 7,
+    "executed": false
+  }
+]

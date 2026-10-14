@@ -1,0 +1,21 @@
+{
+  "three_formats_and_partial_line_upload": {
+    "input_lines": 4,
+    "inserted": 4,
+    "duplicates": 0,
+    "partial": 1,
+    "retained": 4,
+    "unregistered_services": [],
+    "duration_seconds": 0.012
+  },
+  "duplicate_file_upload": {
+    "input_lines": 4,
+    "inserted": 0,
+    "duplicates": 4,
+    "partial": 1,
+    "retained": 4,
+    "unregistered_services": [],
+    "duration_seconds": 0.005
+  },
+  "passed": true
+}

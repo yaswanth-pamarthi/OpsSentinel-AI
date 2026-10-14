@@ -1,0 +1,7 @@
+import {useState} from 'react';
+import {request} from './api';
+export default function RuleManager({rules,onSaved}:{rules:Record<string,any>[],onSaved:()=>Promise<void>}){
+ const [selected,setSelected]=useState('');const [value,setValue]=useState(JSON.stringify({name:'CUSTOM_HTTP_BURST',query_type:'http',pattern:'',threshold:10,window_seconds:300,severity:'SEV-2',enabled:true},null,2));const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+ function select(id:string){setSelected(id);if(id){const {name,query_type,pattern,threshold,window_seconds,severity,enabled}=rules.find(r=>r.id===id)!;setValue(JSON.stringify({name,query_type,pattern,threshold,window_seconds,severity,enabled},null,2))}}
+ return <div className="card"><h2>Commander rule configuration</h2><p className="muted">Configure rule type, threshold, time window, severity and enabled state.</p><select value={selected} onChange={e=>select(e.target.value)}><option value="">Create a new rule</option>{rules.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select><textarea value={value} onChange={e=>setValue(e.target.value)} style={{minHeight:250}}/>{error&&<p className="error">{error}</p>}<button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{await request('/rules'+(selected?'/'+selected:''),JSON.parse(value),selected?'PATCH':'POST');await onSaved()}catch(e){setError((e as Error).message)}finally{setBusy(false)}}}>Save rule configuration</button></div>
+}

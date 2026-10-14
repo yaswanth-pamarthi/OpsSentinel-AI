@@ -1,0 +1,10 @@
+flowchart LR
+      Browser[React TypeScript UI] --> API[FastAPI role and object checks]
+      API --> DB[(PostgreSQL 17 + pgvector)]
+      API --> Files[Local uploads and reports]
+      API --> Graph[LangGraph specialist workflow]
+      Graph --> Ollama[Native Ollama Qwen3 1.7B]
+      Graph --> Checkpoint[(Durable SQLite checkpoints)]
+      Ollama --> Evidence[Validated JSON and allowed evidence IDs]
+      Graph --> Human[Authenticated human review]
+      Human --> Final[Final report with audit history]

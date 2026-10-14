@@ -1,0 +1,15 @@
+{
+  "lines": 10000,
+  "roundtrip_seconds": 9.24,
+  "target_seconds": 30,
+  "passed": true,
+  "ingestion": {
+    "input_lines": 10000,
+    "inserted": 10000,
+    "duplicates": 0,
+    "partial": 0,
+    "retained": 10000,
+    "unregistered_services": [],
+    "duration_seconds": 9.187
+  }
+}

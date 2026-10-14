@@ -1,0 +1,4 @@
+2026-10-14T09:00:00Z INFO checkout-api request completed
+timestamp=2026-10-14T09:00:05Z level=INFO service=checkout-api message="request completed" http_status=200 latency_ms=100
+{"timestamp":"2026-10-14T09:00:10Z","level":"INFO","service":"checkout-api","message":"request completed"}
+malformed line retained for investigation

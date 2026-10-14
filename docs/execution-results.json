@@ -1,0 +1,147 @@
+[
+  {
+    "scenario": "db-pool-exhaustion",
+    "incident_id": "abaf0302-00b5-4fda-a139-03be7bd778fa",
+    "run_id": "e175ce78-a3cb-4035-b368-397d6a85a7cd",
+    "analysis_seconds": 22.56,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 5,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 270,
+      "inserted": 270,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 270,
+      "unregistered_services": [],
+      "duration_seconds": 0.254
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-16T02:21:58+00:00",
+      "window_end": "2026-10-16T02:32:53+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "6ecbd9d3-4964-4b47-8ea6-7323b44900fb"
+  },
+  {
+    "scenario": "auth-brute-force",
+    "incident_id": "10609ceb-3a98-4506-a583-6603d0a8db4c",
+    "run_id": "2d73cd3c-b1df-43cf-bb22-2382aa50abb8",
+    "analysis_seconds": 20.22,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 1,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 240,
+      "inserted": 240,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 240,
+      "unregistered_services": [],
+      "duration_seconds": 0.24
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-16T03:11:53+00:00",
+      "window_end": "2026-10-16T03:22:48+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "18285038-8bcd-48fe-872a-b3870a938512"
+  },
+  {
+    "scenario": "payment-api-latency",
+    "incident_id": "7f55277e-968b-48b2-af33-fb123ce4274f",
+    "run_id": "a80c4f77-6712-428f-a6c8-40b5db32d923",
+    "analysis_seconds": 22.28,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 1,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 240,
+      "inserted": 240,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 240,
+      "unregistered_services": [],
+      "duration_seconds": 0.275
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-16T04:01:48+00:00",
+      "window_end": "2026-10-16T04:12:43+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "aa310a9a-4f7d-4c22-a056-27c555ddee8f"
+  },
+  {
+    "scenario": "deployment-restart-loop",
+    "incident_id": "70daa4b7-2e1c-4208-a632-122679053944",
+    "run_id": "b7086d89-0989-4709-bfcb-e294830a800e",
+    "analysis_seconds": 20.23,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 1,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 240,
+      "inserted": 240,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 240,
+      "unregistered_services": [],
+      "duration_seconds": 0.26
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-16T04:51:43+00:00",
+      "window_end": "2026-10-16T05:02:38+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "76cb51bb-00ef-44c6-bb3e-e62e630eeff8"
+  },
+  {
+    "scenario": "critical-error-rate",
+    "incident_id": "71984c28-4f29-4aba-af3a-93edbe564874",
+    "run_id": "1302f257-3d5e-4e0a-840c-104ee3945871",
+    "analysis_seconds": 22.28,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 2,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 240,
+      "inserted": 240,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 240,
+      "unregistered_services": [],
+      "duration_seconds": 0.266
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-16T05:41:38+00:00",
+      "window_end": "2026-10-16T05:52:33+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "58ef75a2-0bf9-4b2d-9927-2fc27e78b0a6"
+  }
+]
