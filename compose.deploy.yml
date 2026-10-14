@@ -1,0 +1,61 @@
+name: opssentinel-deployment
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: opssentinel
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure .env first}
+    volumes:
+      - deployment_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d opssentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+psycopg://app_user:${POSTGRES_PASSWORD:?Configure .env first}@db:5432/opssentinel
+      JWT_SECRET: ${JWT_SECRET:?Configure .env first}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?Configure .env first}
+      OLLAMA_BASE_URL: ${DEPLOY_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_CHAT_MODEL: qwen3:1.7b
+      OLLAMA_EMBED_MODEL: nomic-embed-text
+      AI_MODE: ollama
+      FRONTEND_ORIGIN: http://localhost:15174
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - deployment_storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    ports:
+      - "127.0.0.1:15174:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  deployment_db:
+  deployment_storage:

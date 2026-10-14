@@ -1,0 +1,31 @@
+[
+  {
+    "scenario": "db-pool-exhaustion",
+    "incident_id": "a9989159-a965-4f1b-95d1-6498f3e5b70a",
+    "run_id": "79d1403e-1fab-482d-bb4a-491d186a35dc",
+    "analysis_seconds": 24.3,
+    "agents": 7,
+    "status": "CLOSED",
+    "model": "qwen3:1.7b",
+    "alerts": 5,
+    "duplicate_alerts": 0,
+    "parser": {
+      "input_lines": 270,
+      "inserted": 270,
+      "duplicates": 0,
+      "partial": 0,
+      "retained": 270,
+      "unregistered_services": [],
+      "duration_seconds": 0.087
+    },
+    "validation_metrics": {
+      "window_start": "2026-10-15T10:58:55+00:00",
+      "window_end": "2026-10-15T11:09:50+00:00",
+      "window_seconds": 655.0,
+      "event_count": 132,
+      "error_rate": 0.0,
+      "p95_latency_ms": 100.0
+    },
+    "report_id": "dbfbd482-157a-4438-966a-e840f852dc10"
+  }
+]

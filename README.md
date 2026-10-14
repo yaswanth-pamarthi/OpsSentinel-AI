@@ -84,3 +84,11 @@ Passwords use Argon2 and 60-minute JWTs. Role checks run on the server; procurem
 The generation model provides validated commentary. Deterministic code owns quotation arithmetic, vendor eligibility/scoring, alert triggers and RCA evidence ranking. Synthetic test success is not a claim of arbitrary-document accuracy or production monitoring. The quotation extractor handles one reconciled labelled digital-PDF item; empty/scanned pages are marked OCR_REQUIRED. Durable worker queues, richer extraction, OCR, SSO, ERP/ITSM connectors and real external notifications are documented extensions.
 
 No agent executes infrastructure commands or issues purchase orders. Operations records an engineer's actual simulated action separately from its proposal and requires a ten-minute healthy evidence window before resolution. The final human decision and original recommendation/hypothesis history remain inspectable.
+
+## Container deployment
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for the API + production-built frontend + database stack, isolated persistent volumes and reproducible commands. This is local deployment evidence, not a public hosting claim.
+
+## Verified container evidence
+
+Public source: [OpsSentinel-AI](https://github.com/yaswanth-pamarthi/OpsSentinel-AI). Local Docker workflow evidence: [deployment-results.json](docs/deployment-results.json); real inference workflow: [deployment-workflow-results.json](docs/deployment-workflow-results.json). The containers use production-built frontend assets; hosting remains local. All 79 combined host tests passed again on 2026-10-14. Container tests passed with host-path fixtures skipped, as recorded in the deployment evidence.
